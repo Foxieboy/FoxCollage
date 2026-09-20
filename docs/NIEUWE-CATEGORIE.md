@@ -25,6 +25,10 @@ verwijzen. Maak er minstens twee die sterk lijken op een verborgen item, maar he
 zijn — een ander instrument uit dezelfde familie, een andere vrucht uit dezelfde boom.
 Die twijfel maakt het spel.
 
+Hou ze ongeveer in evenwicht met het aantal items: met tien items en zestien afleiders kost
+het leegruimen van de hele plaat 160 seconden straftijd, en dat hoort een slechte ruil te
+zijn tegenover gewoon verder zoeken. Veel minder afleiders maakt die hint te goedkoop.
+
 ## 1b. Hou het spoilervrij
 
 De speler is vaak de opdrachtgever zelf. Noem daarom **geen enkel antwoord** in de README, in
@@ -42,7 +46,10 @@ waarschuwing.
     // Geeft de binnenkant van de <svg> terug als string.
     // Elk verborgen item krijgt een eigen groep:
     //   <g class="hidden-item" data-item="kattenberg" transform="translate(x,y)"> ... </g>
-    // Afleiders krijgen class="decoy".
+    // Afleiders krijgen class="decoy" - de hint "haal iets weg" zoekt op die
+    //   class, dus een vergeten class maakt het voorwerp onwegneembaar.
+    //   Zet die class alleen op losse voorwerpen, niet op decor (lucht, huizen,
+    //   bomen, wegen): decor hoort altijd te blijven staan.
     // Eindig met <g id="fc-markers"></g>: daarin tekent het spel zijn markeringen.
     return '<rect width="1200" height="800" fill="#bfe3f5"/>' +
            /* ... */

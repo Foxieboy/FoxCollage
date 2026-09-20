@@ -28,8 +28,8 @@ bestanden ongewijzigd serveert.
 |---|---|
 | **Invullen** | Tien invulboxen. Typ een antwoord, druk op `Enter`. Volgorde maakt niet uit. Kleine tikfouten worden bij langere namen vergeven; korte namen moeten exact, anders gok je er per ongeluk eentje goed. |
 | **Tijd** | Loopt vanaf het verschijnen van de tekening tot het tiende item gevonden is. |
-| **Hints** | *Aanwijzing* (+20 s) geeft een cryptische omschrijving, *Toon plek* (+30 s) markeert en zoomt naar de plek, *Geef antwoord* (+60 s) vult het item in. De drie hints gaan over hetzelfde item tot dat opgelost is, zodat ze op elkaar voortbouwen. |
-| **Afleiders** | De tekening bevat voorwerpen die nergens naar verwijzen, en bewuste bijna-treffers: twee voorwerpen die sterk op een verborgen item lijken maar niet meetellen. |
+| **Hints** | Vier soorten, geprijsd naar hoeveel ze weggeven. *Haal iets weg* (+10 s) laat één voorwerp verdwijnen dat nergens naar verwijst; *Aanwijzing* (+20 s) geeft een cryptische omschrijving; *Toon plek* (+30 s) markeert en zoomt naar de plek; *Geef antwoord* (+60 s) vult het item in. De laatste drie gaan over hetzelfde item tot dat opgelost is, zodat ze op elkaar voortbouwen. |
+| **Afleiders** | De tekening bevat voorwerpen die nergens naar verwijzen, en bewuste bijna-treffers: twee voorwerpen die sterk op een verborgen item lijken maar niet meetellen. Ze zijn één voor één weg te kopen met de goedkoopste hint; het decor (lucht, huizen, bomen) blijft altijd staan. |
 | **Einde** | Alle tien plekken worden gemarkeerd, met per item de uitleg van de woordgrap. Je snelste tijd per categorie staat in `localStorage`. |
 
 ## Categorieën

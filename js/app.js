@@ -86,6 +86,7 @@
     $('game-intro').textContent = category.intro;
 
     renderScene(category);
+    state.game.setDecoyCount(el.svg.querySelectorAll('.decoy').length);
     renderSlots(category.items.length);
     el.hintLog.innerHTML = '';
     setMessage('');
@@ -216,17 +217,21 @@
 
     var hint = state.game.useHint(type);
     if (!hint) {
-      setMessage('Er is niets meer om een hint over te geven.', 'warn');
+      setMessage(type === 'declutter'
+        ? 'Alle ongerelateerde voorwerpen zijn al weg.'
+        : 'Er is niets meer om een hint over te geven.', 'warn');
       return;
     }
 
     var seconds = Math.round(hint.penalty / 1000);
-    var label = { clue: 'Aanwijzing', locate: 'Plek', solve: 'Antwoord' }[type];
+    var label = { declutter: 'Voorwerp weg', clue: 'Aanwijzing', locate: 'Plek', solve: 'Antwoord' }[type];
     var entry = doc.createElement('li');
     entry.className = 'hint-log__item';
     entry.innerHTML = '<strong>' + label + ' (+' + seconds + ' s):</strong> ' + Utils.escapeHtml(hint.text);
     el.hintLog.appendChild(entry);
     el.hintLog.scrollTop = el.hintLog.scrollHeight;
+
+    if (type === 'declutter') removeRandomDecoy();
 
     if (type === 'locate') {
       markItem(hint.item, { pulse: true });
@@ -242,6 +247,31 @@
 
     setMessage(label + ' gebruikt: +' + seconds + ' seconden.', 'warn');
     updateHud();
+  }
+
+  /**
+   * Laat één afleider verdwijnen. Kiest bij voorkeur een voorwerp dat de speler
+   * op dat moment in beeld heeft, anders ziet hij zijn straftijd niet gebeuren.
+   */
+  function removeRandomDecoy() {
+    var pool = Array.prototype.slice.call(el.svg.querySelectorAll('.decoy:not(.is-removing)'));
+    if (!pool.length) return;
+
+    var inBeeld = pool.filter(isInViewport);
+    var keuze = inBeeld.length ? inBeeld : pool;
+    var target = keuze[Math.floor(Math.random() * keuze.length)];
+
+    target.classList.add('is-removing');
+    setTimeout(function () {
+      if (target.parentNode) target.parentNode.removeChild(target);
+    }, 700);
+  }
+
+  function isInViewport(node) {
+    var box = node.getBoundingClientRect();
+    var stage = el.svg.getBoundingClientRect();
+    return box.width > 0 && box.right > stage.left && box.left < stage.right &&
+      box.bottom > stage.top && box.top < stage.bottom;
   }
 
   /* ------------------------------------------------------------------ */
@@ -405,6 +435,11 @@
     el.timer.textContent = Utils.formatTime(state.game.elapsedMs());
     el.progress.textContent = state.game.foundCount() + ' / ' + state.game.items.length;
     el.penalty.textContent = state.game.penaltyMs ? '+' + Math.round(state.game.penaltyMs / 1000) + ' s straftijd' : '';
+
+    var declutter = $('hint-declutter');
+    var left = state.game.decoysLeft();
+    declutter.disabled = left <= 0;
+    declutter.title = left + ' ongerelateerde voorwerpen over';
   }
 
   function onGameEvent(event, game) {
@@ -472,6 +507,7 @@
   function bindControls() {
     // Eén luisteraar op de lijst; de invulboxen zelf worden per spel vervangen.
     el.slots.addEventListener('keydown', onSlotKeydown);
+    $('hint-declutter').addEventListener('click', function () { requestHint('declutter'); });
     $('hint-clue').addEventListener('click', function () { requestHint('clue'); });
     $('hint-locate').addEventListener('click', function () { requestHint('locate'); });
     $('hint-solve').addEventListener('click', function () { requestHint('solve'); });

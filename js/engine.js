@@ -5,9 +5,10 @@
   var Utils = root.FoxCollage.Utils;
 
   var HINT_COSTS = {
-    clue: 20000,   // cryptische omschrijving van een nog niet gevonden item
-    locate: 30000, // markeer de plek in de tekening
-    solve: 60000   // geef het antwoord meteen
+    declutter: 10000, // haal één ongerelateerd voorwerp uit de tekening
+    clue: 20000,      // cryptische omschrijving van een nog niet gevonden item
+    locate: 30000,    // markeer de plek in de tekening
+    solve: 60000      // geef het antwoord meteen
   };
 
   var RECORD_KEY = 'foxcollage.records.v1';
@@ -35,6 +36,8 @@
     this.startedAt = null;
     this.finishedAt = null;
     this.penaltyMs = 0;
+    this.decoyTotal = 0;    // aantal afleiders in de tekening, geteld door de ui
+    this.decoysRemoved = 0;
     this.hintsUsed = 0;
     this.wrongGuesses = 0;
     this.focusItemId = null; // item waar de hints momenteel over gaan
@@ -50,6 +53,15 @@
     this.listeners.forEach(function (cb) {
       cb(event, self);
     });
+  };
+
+  /** De ui telt de afleiders in de tekening, zodat kunst en logica niet uiteen kunnen lopen. */
+  Game.prototype.setDecoyCount = function (count) {
+    this.decoyTotal = count;
+  };
+
+  Game.prototype.decoysLeft = function () {
+    return Math.max(0, this.decoyTotal - this.decoysRemoved);
   };
 
   Game.prototype.start = function () {
@@ -144,6 +156,7 @@
   Game.prototype.useHint = function (type) {
     if (!this.isRunning()) return null;
     if (!HINT_COSTS.hasOwnProperty(type)) return null;
+    if (type === 'declutter') return this.removeDecoy();
 
     var target = this.focusItemId ? this.getItem(this.focusItemId) : null;
     if (!target || target.found) target = this.pickHintTarget();
@@ -179,6 +192,32 @@
 
     this.emit({ type: 'hint', hint: result });
     if (type === 'solve') this.checkCompletion();
+    return result;
+  };
+
+  /**
+   * Haalt één ongerelateerd voorwerp uit de tekening. Helpt het zwakst van alle
+   * hints - het versmalt enkel de zoekruimte - en kost daarom het minst.
+   */
+  Game.prototype.removeDecoy = function () {
+    if (this.decoysLeft() <= 0) return null;
+
+    this.penaltyMs += HINT_COSTS.declutter;
+    this.hintsUsed++;
+    this.decoysRemoved++;
+
+    var left = this.decoysLeft();
+    var result = {
+      type: 'declutter',
+      item: null,
+      penalty: HINT_COSTS.declutter,
+      remaining: left,
+      text: left
+        ? 'Eén voorwerp dat nergens naar verwijst is verdwenen. Er staan er nog ' + left + '.'
+        : 'Het laatste ongerelateerde voorwerp is verdwenen: alles wat overblijft telt mee.'
+    };
+
+    this.emit({ type: 'hint', hint: result });
     return result;
   };
 
