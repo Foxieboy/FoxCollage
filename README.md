@@ -13,8 +13,14 @@ De tekening beeldt de *betekenis* van een naam uit, niet de plaats of het ding z
 
 ## Spelen
 
-Geen build, geen server, geen dependencies: open `index.html` in een browser.
+**Online:** https://foxieboy.github.io/FoxCollage/ — werkt zodra GitHub Pages aanstaat
+(Settings → Pages → Source: *Deploy from a branch* → `main` / `/ (root)`).
+
+**Lokaal:** geen build, geen server, geen dependencies — open `index.html` in een browser.
 (Of serveer de map, bv. `npx http-server .`)
+
+Het spel draait volledig in de browser. `.nojekyll` staat in de repo zodat Pages de
+bestanden ongewijzigd serveert.
 
 ## Hoe het spel werkt
 
