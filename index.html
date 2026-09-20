@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FoxCollage — zoek de verborgen items</title>
+<meta name="description" content="Zoekplaatspel: vind tien verborgen items uit een categorie in de collagetekening, zo snel mogelijk.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ============================ STARTSCHERM ============================ -->
+<main id="screen-home" class="screen screen--home">
+  <header class="hero">
+    <h1 class="hero__title">Fox<span>Collage</span></h1>
+    <p class="hero__lead">
+      In elke tekening zitten tien items uit één categorie verstopt — telkens als woordgrap.
+      Herken ze en typ ze zo snel mogelijk in de invulboxen. De klok loopt.
+    </p>
+  </header>
+
+  <section class="panel">
+    <h2 class="panel__title">Kies een categorie</h2>
+    <div id="category-list" class="category-list"></div>
+  </section>
+
+  <section class="panel panel--rules">
+    <h2 class="panel__title">Hoe werkt het?</h2>
+    <ul class="rules">
+      <li>De tekening beeldt de <strong>betekenis</strong> van een naam uit, niet de plaats of het ding zelf. (Verzonnen voorbeeld, buiten het spel: een kat op een berg zou <em>Kattenberg</em> zijn.)</li>
+      <li>Typ een antwoord in een invulbox en druk op <kbd>Enter</kbd>. De volgorde maakt niet uit.</li>
+      <li>Er staan ook gewone voorwerpen in de tekening die nergens naar verwijzen. Die zijn er om je te misleiden.</li>
+      <li>Vastgelopen? Hints helpen je verder, maar kosten straftijd:
+        <span class="pill">aanwijzing +20 s</span>
+        <span class="pill">plek tonen +30 s</span>
+        <span class="pill">antwoord +60 s</span>
+      </li>
+      <li>Sleep om te verschuiven, scroll of gebruik de knoppen om in te zoomen op details.</li>
+    </ul>
+  </section>
+
+  <footer class="site-footer">Je snelste tijd per categorie wordt lokaal in je browser bewaard.</footer>
+</main>
+
+<!-- ============================ SPELSCHERM ============================ -->
+<main id="screen-game" class="screen screen--game" hidden>
+  <header class="topbar">
+    <div class="topbar__left">
+      <button id="back-home" class="btn btn--ghost" type="button">&larr; Menu</button>
+      <div>
+        <h2 id="game-category" class="topbar__title">Categorie</h2>
+        <p id="game-intro" class="topbar__intro"></p>
+      </div>
+    </div>
+    <div class="topbar__right">
+      <div class="stat">
+        <span class="stat__label">Tijd</span>
+        <span id="timer" class="stat__value stat__value--time">00:00,0</span>
+        <span id="penalty" class="stat__note"></span>
+      </div>
+      <div class="stat">
+        <span class="stat__label">Gevonden</span>
+        <span id="progress" class="stat__value">0 / 10</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="game-body">
+    <section class="stage-wrap">
+      <div id="stage" class="stage"></div>
+      <div class="stage-tools">
+        <button id="zoom-out" class="btn btn--icon" type="button" title="Uitzoomen" aria-label="Uitzoomen">&minus;</button>
+        <button id="zoom-reset" class="btn btn--icon" type="button" title="Volledige tekening" aria-label="Volledige tekening">&#9634;</button>
+        <button id="zoom-in" class="btn btn--icon" type="button" title="Inzoomen" aria-label="Inzoomen">+</button>
+      </div>
+    </section>
+
+    <aside class="sidebar">
+      <h3 class="sidebar__title">Jouw antwoorden</h3>
+      <p id="message" class="message"></p>
+      <ol id="slots" class="slots"></ol>
+
+      <div class="hints">
+        <h3 class="sidebar__title">Hints</h3>
+        <div class="hints__buttons">
+          <button id="hint-clue" class="btn btn--hint" type="button">Aanwijzing <span>+20 s</span></button>
+          <button id="hint-locate" class="btn btn--hint" type="button">Toon plek <span>+30 s</span></button>
+          <button id="hint-solve" class="btn btn--hint" type="button">Geef antwoord <span>+60 s</span></button>
+        </div>
+        <ul id="hint-log" class="hint-log"></ul>
+      </div>
+
+      <button id="give-up" class="btn btn--quiet" type="button">Opgeven en oplossing tonen</button>
+    </aside>
+  </div>
+
+  <!-- ========================== EINDSCHERM ========================== -->
+  <div id="screen-result" class="screen result-overlay" hidden>
+    <div class="result-card">
+      <div id="result-body"></div>
+      <div class="result-actions">
+        <button id="result-again" class="btn btn--primary" type="button">Opnieuw spelen</button>
+        <button id="result-home" class="btn btn--ghost" type="button">Andere categorie</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="js/utils.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/categories/belgische-steden.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
