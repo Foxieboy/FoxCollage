@@ -26,11 +26,59 @@ bestanden ongewijzigd serveert.
 
 | | |
 |---|---|
-| **Invullen** | Tien invulboxen. Typ een antwoord, druk op `Enter`. Volgorde maakt niet uit. Kleine tikfouten worden bij langere namen vergeven; korte namen moeten exact, anders gok je er per ongeluk eentje goed. |
+| **Invullen** | Tien invulboxen. Typ een antwoord, druk op `Enter`. Volgorde maakt niet uit. |
+| **Spelling** | Mag fout. Tijdens het typen krijg je namen uit het thema voorgesteld, en wie toch zelf tikt, wordt ruim vergeven — zie hieronder. |
 | **Tijd** | Loopt vanaf het verschijnen van de tekening tot het tiende item gevonden is. |
 | **Hints** | Vier soorten, geprijsd naar hoeveel ze weggeven. *Haal iets weg* (+10 s) laat één voorwerp verdwijnen dat nergens naar verwijst; *Aanwijzing* (+20 s) geeft een cryptische omschrijving; *Toon plek* (+30 s) markeert en zoomt naar de plek; *Geef antwoord* (+60 s) vult het item in. De laatste drie gaan over hetzelfde item tot dat opgelost is, zodat ze op elkaar voortbouwen. |
 | **Afleiders** | De tekening bevat voorwerpen die nergens naar verwijzen, en bewuste bijna-treffers: twee voorwerpen die sterk op een verborgen item lijken maar niet meetellen. Ze zijn één voor één weg te kopen met de goedkoopste hint; het decor (lucht, huizen, bomen) blijft altijd staan. |
 | **Einde** | Alle tien plekken worden gemarkeerd, met per item de uitleg van de woordgrap. Je snelste tijd per categorie staat in `localStorage`. |
+
+## Spelfouten worden opgevangen
+
+Een tijdspel verliezen op een typfout is geen spel meer. Daarom vier lagen, van
+voorkomen naar vergeven:
+
+1. **Suggesties tijdens het typen.** De invulboxen hangen aan een lijst met álle
+   namen uit het thema, niet alleen de antwoorden. Wie een suggestie aanklikt,
+   spelt per definitie juist — en omdat de lijst honderden namen telt, verraadt
+   ze niets.
+2. **Klinkt het hetzelfde?** Elk antwoord krijgt een fonetische sleutel die
+   Nederlandse schrijfvarianten gelijkschakelt: `c`/`k`, `ck`, `ch`/`g`,
+   `ei`/`ij`/`y`, `ou`/`au`, `oe`/`u`, `v`/`f`, `z`/`s`, eind-`d`/`t` en dubbele
+   letters. Het verzonnen *Kattenbergh* komt zo op dezelfde sleutel uit als
+   *Kattenberg*.
+3. **Tikfoutmarge.** Daarnaast een bewerkingsafstand waarin het omwisselen van
+   twee letters naast elkaar als één fout telt — precies wat vingers doen. Bij
+   korte namen geldt een extra eis: de letters moeten nagenoeg dezelfde blijven.
+   Een weggevallen of verdubbelde letter is een tikfout, een vervángen letter is
+   een ander woord.
+4. **Twee vangnetten tegen cadeaus.** Wie een andere bestaande naam uit het thema
+   typt, heeft geen tikfout gemaakt maar iets anders bedoeld: dat wordt nooit als
+   treffer geteld. En lijkt de invoer even sterk op twee antwoorden, dan vraagt
+   het spel om preciezer te typen in plaats van er één te kiezen — dat kost geen
+   misgok.
+
+Wordt je spelling gecorrigeerd, dan zegt het spel het ("we lezen dit als …") en
+komt de juiste schrijfwijze in de box te staan.
+
+## Testen
+
+```
+node test/spelling.js          # vereist playwright
+node test/spoilers.js          # draait zonder browser
+```
+
+**spelling.js** genereert verschrijvingen uit de categoriegegevens zelf en
+controleert dat ze aanvaard worden, dat elk antwoord tussen de suggesties staat,
+en dat geen enkele andere naam uit het thema als antwoord geldt.
+
+**spoilers.js** leest de antwoorden uit de categorieën en zoekt ze in alles wat
+een speler onder ogen krijgt — README, startscherm, handleiding, code en tests.
+Het vergelijkt op fonetische sleutel, zodat ook een verhaspeling wordt gevonden;
+een antwoord verkeerd spellen is geen manier om eronderuit te komen. De tekening
+zelf (`js/categories/`) en `docs/oplossingen/` blijven buiten beschouwing.
+
+Geen van beide testbestanden bevat antwoorden.
 
 ## Categorieën
 

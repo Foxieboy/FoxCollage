@@ -63,6 +63,7 @@ waarschuwing.
     intro: 'Eén regel die tijdens het spel bovenaan staat.',
     viewBox: '0 0 1200 800',
     buildScene: buildScene,
+    vocabulary: [/* alle namen van het thema, niet enkel de antwoorden */],
     items: [{
       id: 'kattenberg',
       name: 'Kattenberg',          // het antwoord zoals het getoond wordt (verzonnen)
@@ -87,6 +88,25 @@ Voeg het bestand toe in `index.html`, vóór `js/app.js`:
 ```
 
 De categoriekaart verschijnt dan vanzelf op het startscherm.
+
+## 2b. Geef het thema een woordenlijst
+
+`vocabulary` is optioneel maar sterk aangeraden: een lijst met **alle** namen die
+in dit thema bestaan, niet alleen je tien antwoorden. Ze doet twee dingen.
+
+* **Suggesties.** De invulboxen hangen eraan, dus de speler hoeft de naam niet
+  zelf te spellen. Daarom moet de lijst lang zijn: met tien namen erin geef je
+  het spel weg, met honderden verraadt ze niets. Controleer wel dat elk antwoord
+  er ook echt in staat, anders ontbreekt net dat ene in de suggesties —
+  `test/spelling.js` kijkt dat na.
+* **Vangnet tegen cadeaus.** Typt de speler een andere bestaande naam, dan is dat
+  geen tikfout maar een ander bedoeld woord, en wordt het nooit als treffer
+  geteld. Zonder die lijst zou een buurnaam binnen de tikfoutmarge kunnen vallen.
+
+Een onvolledige lijst is niet erg: beide taken falen zacht. Een ontbrekende naam
+wordt niet gesuggereerd, en de spellingcontrole valt terug op de fonetische
+vergelijking. Zet de lijst in `js/data/` als ze groot is, en laat de categorie
+ernaar verwijzen.
 
 ## 3. Let op bij het tekenen
 

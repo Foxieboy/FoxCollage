@@ -467,6 +467,9 @@
       'Niet alles in de tekening telt mee - er staan ook gewone voorwerpen tussen.',
     viewBox: '0 0 1200 800',
     buildScene: buildScene,
+    // Alle gemeentenamen van het thema, niet enkel de antwoorden: voedt de
+    // suggesties tijdens het typen en houdt valse treffers tegen.
+    vocabulary: (root.FoxCollage && root.FoxCollage.data && root.FoxCollage.data.belgischeGemeenten) || [],
     items: [
       {
         id: 'turnhout',

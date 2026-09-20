@@ -29,6 +29,9 @@
     <ul class="rules">
       <li>De tekening beeldt de <strong>betekenis</strong> van een naam uit, niet de plaats of het ding zelf. (Verzonnen voorbeeld, buiten het spel: een kat op een berg zou <em>Kattenberg</em> zijn.)</li>
       <li>Typ een antwoord in een invulbox en druk op <kbd>Enter</kbd>. De volgorde maakt niet uit.</li>
+      <li>Spelling hoeft niet perfect: tijdens het typen krijg je namen voorgesteld, en wie toch
+        zelf tikt mag zich vergissen — <em>Kattenbergh</em> of <em>Katteberg</em> zou ook goed
+        gerekend worden.</li>
       <li>Er staan ook gewone voorwerpen in de tekening die nergens naar verwijzen. Die zijn er om je te misleiden.</li>
       <li>Vastgelopen? Hints helpen je verder, maar kosten straftijd:
         <span class="pill">voorwerp weghalen +10 s</span>
@@ -80,6 +83,7 @@
       <h3 class="sidebar__title">Jouw antwoorden</h3>
       <p id="message" class="message"></p>
       <ol id="slots" class="slots"></ol>
+      <datalist id="fc-woordenlijst"></datalist>
 
       <div class="hints">
         <h3 class="sidebar__title">Hints</h3>
@@ -110,6 +114,7 @@
 
 <script src="js/utils.js"></script>
 <script src="js/engine.js"></script>
+<script src="js/data/belgische-gemeenten.js"></script>
 <script src="js/categories/belgische-steden.js"></script>
 <script src="js/app.js"></script>
 </body>

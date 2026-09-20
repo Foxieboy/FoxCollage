@@ -23,6 +23,7 @@
         id: item.id,
         name: item.name,
         answers: [item.name].concat(item.aliases || []).map(Utils.normalize),
+        keys: [item.name].concat(item.aliases || []).map(Utils.phoneticKey),
         clue: item.clue,
         explanation: item.explanation,
         focus: item.focus,
@@ -32,6 +33,15 @@
         located: false
       };
     });
+
+    // Woordenlijst van de categorie: alle namen die in dit thema bestaan, niet
+    // enkel de tien antwoorden. Wie een andere bestaande naam typt, heeft geen
+    // tikfout gemaakt maar een ander ding bedoeld - dat mag nooit als treffer
+    // gelden. Ontbreekt de lijst, dan valt de controle terug op de spelling.
+    this.vocabulary = {};
+    (category.vocabulary || []).forEach(function (naam) {
+      this.vocabulary[Utils.normalize(naam)] = true;
+    }, this);
 
     this.startedAt = null;
     this.finishedAt = null;
@@ -102,20 +112,29 @@
 
   /**
    * Controleert een ingetypt antwoord.
-   * @returns {{status:string, item:?object}} status: correct | duplicate | wrong | empty
+   * @returns {{status:string, item:?object, corrected:boolean}}
+   *          status: correct | duplicate | ambiguous | wrong | empty
    */
   Game.prototype.guess = function (text) {
     if (!this.isRunning()) return { status: 'wrong', item: null };
 
-    var guess = Utils.normalize(text);
-    if (!guess) return { status: 'empty', item: null };
+    var resolved = this.resolveGuess(text);
 
-    var match = this.matchItem(guess);
-    if (!match) {
+    if (resolved.status === 'empty') return { status: 'empty', item: null };
+
+    if (resolved.status === 'ambiguous') {
+      // Geen fout: de speler zat er dicht bij, maar bij meer dan één antwoord.
+      this.emit({ type: 'ambiguous', guess: text });
+      return { status: 'ambiguous', item: null };
+    }
+
+    if (resolved.status === 'miss') {
       this.wrongGuesses++;
       this.emit({ type: 'wrong', guess: text });
       return { status: 'wrong', item: null };
     }
+
+    var match = resolved.item;
     if (match.found) {
       this.emit({ type: 'duplicate', item: match });
       return { status: 'duplicate', item: match };
@@ -125,27 +144,72 @@
     if (this.focusItemId === match.id) this.focusItemId = null;
     this.emit({ type: 'found', item: match });
     this.checkCompletion();
-    return { status: 'correct', item: match };
+    return { status: 'correct', item: match, corrected: resolved.corrected === true };
   };
 
-  Game.prototype.matchItem = function (normalizedGuess) {
-    var i, j;
-    // Eerst een exacte treffer, zodat een tikfout nooit een ander item kaapt.
-    for (i = 0; i < this.items.length; i++) {
-      for (j = 0; j < this.items[i].answers.length; j++) {
-        if (this.items[i].answers[j] === normalizedGuess) return this.items[i];
-      }
-    }
-    for (i = 0; i < this.items.length; i++) {
-      for (j = 0; j < this.items[i].answers.length; j++) {
-        var answer = this.items[i].answers[j];
-        var budget = Math.min(Utils.allowedTypos(answer), Utils.allowedTypos(normalizedGuess));
-        if (budget > 0 && Utils.levenshtein(answer, normalizedGuess) <= budget) {
-          return this.items[i];
+  /**
+   * Zoekt het bedoelde item in vier lagen, van streng naar mild. De volgorde is
+   * het hele punt: pas als een strengere laag niets oplevert, mag de volgende
+   * milder zijn.
+   *
+   *   1. exact wat er staat (naam of alias)
+   *   2. staat het in de woordenlijst? dan bedoelde de speler iets anders
+   *   3. klinkt het hetzelfde (fonetische sleutel)
+   *   4. ligt het binnen de tikfoutmarge
+   *
+   * Past laag 3 of 4 op meer dan één item, dan geven we niets weg: de speler
+   * krijgt de vraag om preciezer te typen.
+   */
+  Game.prototype.resolveGuess = function (text) {
+    var guess = Utils.normalize(text);
+    if (!guess) return { status: 'empty' };
+
+    var key = Utils.phoneticKey(text);
+    var self = this;
+
+    var exact = this.items.filter(function (item) {
+      return item.answers.indexOf(guess) !== -1;
+    });
+    if (exact.length) return { status: 'match', item: exact[0], corrected: false };
+
+    // Een bestaande naam uit dit thema die geen antwoord is: bewust getypt,
+    // dus geen tikfout. Zonder deze stap zou een buurgemeente als treffer gelden.
+    if (this.vocabulary[guess]) return { status: 'miss' };
+
+    var sameSound = this.items.filter(function (item) {
+      return key && item.keys.indexOf(key) !== -1;
+    });
+    if (sameSound.length === 1) return { status: 'match', item: sameSound[0], corrected: true };
+    if (sameSound.length > 1) return { status: 'ambiguous' };
+
+    var near = this.items.filter(function (item) {
+      return self.isNearMiss(item, guess, key);
+    });
+    if (near.length === 1) return { status: 'match', item: near[0], corrected: true };
+    if (near.length > 1) return { status: 'ambiguous' };
+
+    return { status: 'miss' };
+  };
+
+  /** Ligt de gok binnen de tikfoutmarge van dit item, geschreven of klinkend? */
+  Game.prototype.isNearMiss = function (item, guess, key) {
+    var forms = [[item.answers, guess], [item.keys, key]];
+
+    for (var f = 0; f < forms.length; f++) {
+      var lijst = forms[f][0];
+      var invoer = forms[f][1];
+      if (!invoer) continue;
+
+      for (var i = 0; i < lijst.length; i++) {
+        var vorm = lijst[i];
+        if (!vorm) continue;
+        var budget = Utils.typoBudget(Math.max(vorm.length, invoer.length));
+        if (Utils.editDistance(vorm, invoer) <= budget && Utils.plausibleTypo(vorm, invoer)) {
+          return true;
         }
       }
     }
-    return null;
+    return false;
   };
 
   /**

@@ -87,6 +87,7 @@
 
     renderScene(category);
     state.game.setDecoyCount(el.svg.querySelectorAll('.decoy').length);
+    renderSuggestions(category.vocabulary);
     renderSlots(category.items.length);
     el.hintLog.innerHTML = '';
     setMessage('');
@@ -116,6 +117,28 @@
     bindPanZoom();
   }
 
+  /**
+   * Vult de suggestielijst waar de invulboxen aan hangen. Bevat alle namen van
+   * het thema, niet enkel de antwoorden - anders zou de lijst het spel verraden.
+   */
+  function renderSuggestions(vocabulary) {
+    var lijst = $('fc-woordenlijst');
+    lijst.innerHTML = '';
+    if (!vocabulary || !vocabulary.length) {
+      state.hasSuggestions = false;
+      return;
+    }
+
+    var fragment = doc.createDocumentFragment();
+    vocabulary.forEach(function (naam) {
+      var optie = doc.createElement('option');
+      optie.value = naam;
+      fragment.appendChild(optie);
+    });
+    lijst.appendChild(fragment);
+    state.hasSuggestions = true;
+  }
+
   function renderSlots(count) {
     el.slots.innerHTML = '';
     for (var i = 0; i < count; i++) {
@@ -124,7 +147,8 @@
       slot.innerHTML =
         '<span class="slot__number">' + (i + 1) + '</span>' +
         '<input class="slot__input" type="text" autocomplete="off" autocapitalize="off" ' +
-        'spellcheck="false" placeholder="typ hier je antwoord" aria-label="Antwoord ' + (i + 1) + '">' +
+        'spellcheck="false" placeholder="typ hier je antwoord" aria-label="Antwoord ' + (i + 1) + '"' +
+        (state.hasSuggestions ? ' list="fc-woordenlijst"' : '') + '>' +
         '<span class="slot__note"></span>';
       el.slots.appendChild(slot);
     }
@@ -152,8 +176,19 @@
 
     if (result.status === 'correct') {
       lockSlot(slot, result.item);
-      setMessage('Juist! ' + result.item.name + ' gevonden.', 'good');
+      setMessage(result.corrected
+        ? 'Juist! We lezen dit als ' + result.item.name + '.'
+        : 'Juist! ' + result.item.name + ' gevonden.', 'good');
       focusNextEmptySlot();
+      return;
+    }
+
+    if (result.status === 'ambiguous') {
+      // Telt niet als fout: de speler zit dicht bij meer dan één antwoord, en
+      // welke dat zijn verklappen we niet.
+      flash(slot, 'warn');
+      setMessage('Dit lijkt op meer dan één antwoord. Typ het iets preciezer.', 'warn');
+      input.select();
       return;
     }
 

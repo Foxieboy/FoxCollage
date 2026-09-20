@@ -13,35 +13,102 @@
       .replace(/[^a-z0-9]/g, '');
   };
 
-  /** Levenshtein-afstand, gebruikt om tikfouten ("Turnhoud") alsnog goed te rekenen. */
-  Utils.levenshtein = function (a, b) {
+  /**
+   * Bewerkingsafstand tussen twee woorden, waarbij het omwisselen van twee
+   * letters naast elkaar ("kta" voor "kat") als één fout telt en niet als twee.
+   * Dat is precies wat vingers doen, dus zonder die regel vallen net de
+   * typischste tikfouten op korte namen buiten de marge.
+   */
+  Utils.editDistance = function (a, b) {
     if (a === b) return 0;
     if (!a.length) return b.length;
     if (!b.length) return a.length;
 
-    var prev = new Array(b.length + 1);
+    var rows = [];
     var i, j;
-    for (j = 0; j <= b.length; j++) prev[j] = j;
+    for (i = 0; i <= a.length; i++) rows[i] = [i];
+    for (j = 0; j <= b.length; j++) rows[0][j] = j;
 
     for (i = 1; i <= a.length; i++) {
-      var cur = [i];
       for (j = 1; j <= b.length; j++) {
         var cost = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
-        cur[j] = Math.min(cur[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+        rows[i][j] = Math.min(rows[i][j - 1] + 1, rows[i - 1][j] + 1, rows[i - 1][j - 1] + cost);
+
+        // twee letters omgewisseld telt als één fout
+        if (i > 1 && j > 1 &&
+            a.charAt(i - 1) === b.charAt(j - 2) &&
+            a.charAt(i - 2) === b.charAt(j - 1)) {
+          rows[i][j] = Math.min(rows[i][j], rows[i - 2][j - 2] + cost);
+        }
       }
-      prev = cur;
     }
-    return prev[b.length];
+    return rows[a.length][b.length];
   };
 
   /**
-   * Hoeveel tikfouten we toestaan. Korte namen (Ham, Mol) moeten exact,
-   * anders raadt de speler per ongeluk goed met een willekeurig woord.
+   * Fonetische sleutel: schakelt Nederlandse schrijfvarianten gelijk, zodat
+   * "Kattenbergh", "Katenberch" en "Cattenberg" dezelfde sleutel krijgen als
+   * "Kattenberg". Geen echte Soundex - die is op het Engels gebouwd - maar een
+   * lijstje vervangingen voor de fouten die in het Nederlands écht gemaakt
+   * worden: c/k, ck, ch/g, ei/ij/y, ou/au, oe/u, v/f, z/s, eind-d/t en
+   * verdubbelde letters.
    */
-  Utils.allowedTypos = function (word) {
-    if (word.length <= 4) return 0;
-    if (word.length <= 7) return 1;
-    return 2;
+  Utils.phoneticKey = function (text) {
+    var s = Utils.normalize(text);
+    if (!s) return '';
+
+    s = s.replace(/sch/g, 'sg').replace(/ch/g, 'g');
+    s = s.replace(/ck/g, 'k').replace(/qu/g, 'kw').replace(/q/g, 'k').replace(/x/g, 'ks');
+    s = s.replace(/ph/g, 'f').replace(/th/g, 't');
+    s = s.replace(/c([eiy])/g, 's$1').replace(/c/g, 'k');
+    s = s.replace(/ij/g, 'i').replace(/ei/g, 'i').replace(/y/g, 'i');
+    s = s.replace(/ou/g, 'au').replace(/oe/g, 'u').replace(/eu/g, 'u');
+    s = s.replace(/v/g, 'f').replace(/z/g, 's');
+    s = s.replace(/dt$/, 't').replace(/d$/, 't');
+    s = s.replace(/(.)\1+/g, '$1');   // dubbele letters wegwerken: katten -> katen
+
+    return s;
+  };
+
+  /**
+   * Hoeveel tikfouten we toestaan, op de langste van de twee woorden.
+   * Ruimer dan vroeger: de woordenlijst van de categorie vangt de valse
+   * treffers op (zie Game.resolveGuess), dus we mogen hier mild zijn.
+   */
+  Utils.typoBudget = function (length) {
+    if (length <= 4) return 1;
+    if (length <= 9) return 2;
+    return 3;
+  };
+
+  /**
+   * Extra eis bij korte woorden, waar één bewerking al een heel ander woord
+   * oplevert. We kijken naar de letters zelf: bij een tikfout blijven ze
+   * nagenoeg dezelfde (omgewisseld, eentje vergeten, eentje dubbel), bij een
+   * ander bedoeld woord wordt er een letter vervángen. Zo is "kta" wél een
+   * tikfout voor "kat", maar "bal" geen treffer voor een antwoord als "bol".
+   */
+  Utils.plausibleTypo = function (a, b) {
+    if (Math.max(a.length, b.length) > 5) return true;
+
+    var telling = {};
+    var i, ch;
+    for (i = 0; i < a.length; i++) {
+      ch = a.charAt(i);
+      telling[ch] = (telling[ch] || 0) + 1;
+    }
+    for (i = 0; i < b.length; i++) {
+      ch = b.charAt(i);
+      telling[ch] = (telling[ch] || 0) - 1;
+    }
+
+    var teveel = 0, tekort = 0;
+    Object.keys(telling).forEach(function (letter) {
+      if (telling[letter] > 0) tekort += telling[letter];
+      if (telling[letter] < 0) teveel -= telling[letter];
+    });
+
+    return teveel + tekort <= 1;
   };
 
   /** ms -> "mm:ss,d" */
